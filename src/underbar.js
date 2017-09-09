@@ -97,14 +97,9 @@
   _.reject = function(collection, test) {
     // TIP: see if you can re-use _.filter() here, without simply
     // copying code in and modifying it
-    var result = [];
-
-    _.each(collection, function(item) {
-      if (!test(item)) {
-        result.push(item);
-      }
-    });
-    return result;
+    return _.filter(collection, function(item) {
+      return !test(item);
+    });  
   };
 
   // Produce a duplicate-free version of the array.
