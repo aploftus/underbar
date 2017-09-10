@@ -191,12 +191,24 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    iterator = iterator || _.identity;
+    return _.reduce(collection, function(memo, val) {
+      return memo && iterator(val) ? true : false;
+    }, true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    iterator = iterator || _.identity;
+    var results = [];
+    _.each(collection, function(value) {
+      if (iterator(value)) {
+        results.push(value);
+      }  
+    });
+    return results.length > 0;
   };
 
 
@@ -219,11 +231,27 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    var args = [...arguments];
+    for (var i = 1; i < args.length; i++) {
+      for (var key in args[i]) {
+        obj[key] = args[i][key];
+      }
+    }
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    var args = [...arguments].slice(1);
+    _.each(args, function(value) {
+      _.each(value, function(innerVal, index) {
+        if (obj[index] === undefined) {
+          obj[index] = innerVal;
+        }
+      });
+    });
+    return obj;
   };
 
 
@@ -267,6 +295,18 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var alreadyCalled = false;
+    var result = {};
+
+    return function() {
+      //var args = [...arguments];
+      if (!alreadyCalled) {
+        var temp = func.apply(this, arguments);
+        result[temp] = temp;
+        alreadyCalled = true;
+      }
+      return result[temp];
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
