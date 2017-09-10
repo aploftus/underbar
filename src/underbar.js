@@ -104,8 +104,18 @@
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array, isSorted, iterator) {
-    var arrSet = new Set(array);
-    return [...arrSet];
+    var results = [];
+    iterator = iterator || _.identity;
+    var mapped = _.map(array, iterator);
+    var uniqueMapped = [];
+
+    _.each(mapped, function(element, index) {
+      if (!uniqueMapped.includes(element)) {
+        uniqueMapped.push(element);
+        results.push(array[index]);
+      }
+    });
+    return results;
   };
 
 
@@ -295,18 +305,27 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
-    var alreadyCalled = false;
-    var result = {};
+    // var result = {};
+    // var elements = [];
 
-    return function() {
-      //var args = [...arguments];
-      if (!alreadyCalled) {
-        var temp = func.apply(this, arguments);
-        result[temp] = temp;
-        alreadyCalled = true;
-      }
-      return result[temp];
-    };
+    // return function() {
+    //   var args = [...arguments];
+      
+    //   if (Array.isArray(args[0])) {
+    //     elements = args[0].slice();
+    //     console.log(elements);
+    //     if (!result[elements]) {
+    //       result[elements] = func.apply(this, elements)
+    //     }
+    //     return result[elements];
+    //   }
+
+    //   if (!result[args]) {
+    //     result[args] = func.apply(this, arguments);
+    //   }
+    //   return result[args];
+
+    // };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -316,6 +335,10 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var innerArgs = [...arguments].slice(2);
+    setTimeout(function() {
+      return func.apply(this, innerArgs);
+    }, wait);
   };
 
 
@@ -330,6 +353,19 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var copy = array.slice();
+    var results = [];
+    
+    var getRandomIndex = function(min, max) {
+      return Math.floor(Math.random() * (max - min) + min);
+    }
+    
+    while (copy.length > 0) {
+      var randIndex = getRandomIndex(0, copy.length);
+      results.push(copy[randIndex]);
+      copy.splice(randIndex, 1);
+    }
+    return results;
   };
 
 
