@@ -305,27 +305,17 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
-    // var result = {};
-    // var elements = [];
+    var result = {};
 
-    // return function() {
-    //   var args = [...arguments];
-      
-    //   if (Array.isArray(args[0])) {
-    //     elements = args[0].slice();
-    //     console.log(elements);
-    //     if (!result[elements]) {
-    //       result[elements] = func.apply(this, elements)
-    //     }
-    //     return result[elements];
-    //   }
+    return function() {
+      var key = JSON.stringify(arguments);
 
-    //   if (!result[args]) {
-    //     result[args] = func.apply(this, arguments);
-    //   }
-    //   return result[args];
+      if (!result[key]) {
+        result[key] = func.apply(this, arguments);
+      }
+      return result[key];
 
-    // };
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
