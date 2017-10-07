@@ -38,13 +38,12 @@
   // Like first, but for the last elements. If n is undefined, return just the
   // last element.
   _.last = function(array, n) {
-    if (n > array.length) {
-      return array;
-    } else if (n === undefined) {
-      return array[array.length - 1];
-    } else {
-      return array.slice(array.length - n);
+    var len = array.length;
+
+    if (n === undefined) {
+      return array[len - 1];
     }
+    return  n > len ? array : array.slice(len - n);
   };
 
   // Call iterator(value, key, collection) for each element of collection.
@@ -53,9 +52,11 @@
   // Note: _.each does not have a return value, but rather simply runs the
   // iterator function over each item in the input collection.
   _.each = function(collection, iterator) {
+    iterator = iterator || _.identity;
+
     if (Array.isArray(collection)) {
-      for (var index = 0; index < collection.length; index++) {
-        iterator(collection[index], index, collection);
+      for (var i = 0, k = collection.length; i < k; i++) {
+        iterator(collection[i], i, collection);
       }
     } else {
       for (var key in collection) {
@@ -83,20 +84,23 @@
 
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
-    var result = [];
-
+    var results = [];
+    test = test || _.identity;
+    
     _.each(collection, function(item) {
       if (test(item)) {
-        result.push(item);
+        results.push(item);
       }
     });
-    return result;
+    return results;
   };
 
   // Return all elements of an array that don't pass a truth test.
   _.reject = function(collection, test) {
     // TIP: see if you can re-use _.filter() here, without simply
     // copying code in and modifying it
+    test = test || _.identity;
+
     return _.filter(collection, function(item) {
       return !test(item);
     });  
@@ -106,30 +110,42 @@
   _.uniq = function(array, isSorted, iterator) {
     var results = [];
     iterator = iterator || _.identity;
-    var mapped = _.map(array, iterator);
-    var uniqueMapped = [];
 
-    _.each(mapped, function(element, index) {
-      if (!uniqueMapped.includes(element)) {
-        uniqueMapped.push(element);
-        results.push(array[index]);
-      }
-    });
+    var mapped = _.map(array, iterator);
+    var uniqMapped = [];
+
+    if (isSorted) {
+      _.each(mapped, function(item, index) {
+        if (item !== uniqMapped[uniqMapped.length - 1]) {
+          uniqMapped.push(item);
+          results.push(array[index]);
+        }
+      });
+
+    } else {
+      _.each(mapped, function(item, index) {
+        if (!uniqMapped.includes(item)) {
+          uniqMapped.push(item);
+          results.push(array[index]);
+        }
+      });
+    }
+
     return results;
   };
 
 
   // Return the results of applying an iterator to each element.
   _.map = function(collection, iterator) {
-    var result = [];
-
-    _.each(collection, function(item) {
-      result.push(iterator(item));
-    });
-    return result;
     // map() is a useful primitive iteration function that works a lot
     // like each(), but in addition to running the operation on all
     // the members, it also maintains an array of results.
+    var results = [];
+
+    _.each(collection, function(item) {
+      results.push(iterator(item));
+    });
+    return results;
   };
 
   /*
@@ -142,9 +158,6 @@
   // a certain property in it. E.g. take an array of people and return
   // an array of just their ages
   _.pluck = function(collection, key) {
-    // TIP: map is really handy when you want to transform an array of
-    // values into a new array of values. _.pluck() is solved for you
-    // as an example of this.
     return _.map(collection, function(item){
       return item[key];
     });
@@ -202,8 +215,9 @@
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
     iterator = iterator || _.identity;
-    return _.reduce(collection, function(memo, val) {
-      return memo && iterator(val) ? true : false;
+
+    return _.reduce(collection, function(acc, item) {
+      return acc && iterator(item) ? true : false;
     }, true);
   };
 
@@ -212,13 +226,10 @@
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
     iterator = iterator || _.identity;
-    var results = [];
-    _.each(collection, function(value) {
-      if (iterator(value)) {
-        results.push(value);
-      }  
-    });
-    return results.length > 0;
+
+    return _.reduce(collection, function(acc, item) {
+      return acc || iterator(item) ? true : false;
+    }, false);
   };
 
 
@@ -241,23 +252,25 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
-    var args = [...arguments];
-    for (var i = 1; i < args.length; i++) {
-      for (var key in args[i]) {
-        obj[key] = args[i][key];
-      }
-    }
+    var extenders = [...arguments].slice(1);
+
+    _.each(extenders, function(extender) {
+      _.each(extender, function(prop, key) {
+        obj[key] = extender[key];
+      });
+    });
     return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
-    var args = [...arguments].slice(1);
-    _.each(args, function(value) {
-      _.each(value, function(innerVal, index) {
-        if (obj[index] === undefined) {
-          obj[index] = innerVal;
+    var extenders = [...arguments].slice(1);
+
+    _.each(extenders, function(extender) {
+      _.each(extender, function(prop, key) {
+        if (obj[key] === undefined) {
+          obj[key] = extender[key];
         }
       });
     });
@@ -305,15 +318,15 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
-    var result = {};
+    var results = {};
 
     return function() {
       var key = JSON.stringify(arguments);
 
-      if (!result[key]) {
-        result[key] = func.apply(this, arguments);
+      if (results[key] === undefined) {
+        results[key] = func.apply(this, arguments);
       }
-      return result[key];
+      return results[key];
 
     };
   };
